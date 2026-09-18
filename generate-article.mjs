@@ -4,7 +4,6 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const GEMINI_API_KEY = process.env.AI_API_KEY;
 
-// Ortam değişkenleri kontrolü
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !GEMINI_API_KEY) {
   console.error('HATA: GitHub Secrets (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY veya AI_API_KEY) eksik!');
   process.exit(1);
@@ -35,10 +34,10 @@ async function generateDailyArticle() {
 
     console.log('Gemini API\'den felsefi makale isteniyor...');
 
-    // 2. Google Gemini API'ye İstek Atma
     const promptText = 'Felsefi, derin, düşündürücü ve aydınlatıcı Platon veya Nietzsche tarzında kısa bir günlük felsefe makalesi yaz. Yanıtı SADECE geçerli bir JSON nesnesi olarak ver. Başka hiçbir açıklama yazma. Yapı şöyle olmalı: {"title": "Makale Başlığı", "content": "Makale içeriği burada yer alsın..."}';
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    // Model adresini gemini-2.0-flash veya gemini-1.5-flash olarak çağırıyoruz
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -60,8 +59,8 @@ async function generateDailyArticle() {
     }
 
     const result = await response.json();
-    
     const rawContent = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
     if (!rawContent) {
       console.error('Gemini beklenmeyen yanıt yapısı döndürdü:', JSON.stringify(result));
       process.exit(1);
