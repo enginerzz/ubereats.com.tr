@@ -2,12 +2,12 @@ name: Otomatik Günlük Felsefe Makalesi
 
 on:
   schedule:
-    - cron: '0 3 * * *' # Her gün UTC saatiyle 03:00'te çalışır
-  workflow_dispatch: # İstersen GitHub panelinden tek tıkla elle de çalıştırabilirsin
+    - cron: '0 3 * * *'
+  workflow_dispatch:
 
 jobs:
   run-script:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Repoyu Kopyala
         uses: actions/checkout@v4
@@ -15,10 +15,15 @@ jobs:
       - name: Node.js Kur
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Gerekli Paketleri Yükle
-        run: npm install @supabase/supabase-js
+        run: |
+          if [ -f package.json ]; then
+            npm ci || npm install
+          else
+            npm install @supabase/supabase-js
+          fi
 
       - name: Betiği Çalıştır
         env:
