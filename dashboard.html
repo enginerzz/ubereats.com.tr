@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Felsefe Arşivi - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Georgia', serif; }
+        body { background-color: #0b0f19; color: #e2e8f0; min-height: 100vh; padding: 40px 20px; display: flex; justify-content: center; }
+        .app-container { max-width: 700px; width: 100%; text-align: center; }
+        .subtitle { font-size: 13px; color: #9ca3af; margin-bottom: 25px; font-style: italic; }
+        .card { background-color: #111827; border: 1px solid #1f2937; padding: 30px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); text-align: left; }
+        .card h3 { color: #34d399; margin-bottom: 12px; font-size: 18px; }
+        .card p { color: #d1d5db; line-height: 1.7; font-size: 15px; }
+        .user-badge { display: inline-block; background: #1f2937; padding: 6px 14px; border-radius: 20px; font-size: 12px; color: #9ca3af; margin-bottom: 25px; border: 1px solid #374151; }
+        .btn-logout { background-color: #991b1b; color: white; border: none; border-radius: 6px; width: auto; padding: 10px 25px; font-size: 13px; cursor: pointer; margin-top: 10px; font-weight: bold; transition: background 0.2s; }
+        .btn-logout:hover { background-color: #7f1d1d; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <h1 style="font-size: 32px; margin-bottom: 5px; color: #f3f4f6;">Felsefe ve Zihin Arşivi</h1>
+        <p class="subtitle">Gerçekliğin ve Bilincin Sınırlarında Gezinti</p>
+        <div class="user-badge" id="userEmailBadge">Bağlı Zihin: Yükleniyor...</div>
+
+        <div class="card">
+            <h3>Platon'un Mağara Alegorisi</h3>
+            <p>İnsanlar yerin altında, elleri ayakları zincirlenmiş halde doğduklarından beri buradadırlar. Arkalarında yanan bir ateşin ışığıyla duvara yansıyan gölgeleri gerçek sanırlar. Felsefe, insanın zihnindeki zincirleri kırıp dışarıdaki güneşi (gerçeği) görme çabasıdır.</p>
+        </div>
+
+        <div class="card">
+            <h3>Descartes ve Kuşku Yöntemi</h3>
+            <p>"Her şeyden kuşku duyabilirim; ancak kuşku duyduğumdan, yani düşündüğümden kuşku duyamam. Düşünüyorsam, var olmalıyım." Varlık temelimizi akıl ve bilinç üzerine kuruyoruz.</p>
+        </div>
+
+        <div class="card">
+            <h3>Nietzsche ve Üstinsan (Übermensch)</h3>
+            <p>İnsan, hayvan ile üstinsan arasında gerilmiş bir ipdir — uçurum üstünde bir ip. İnsanı aşılması gereken bir varlık, kendi değerlerini kendi yaratan özgür bir töz olarak ele alın.</p>
+        </div>
+
+        <button class="btn-logout" id="logoutBtn">Mağaraya Geri Dön (Çıkış Yap)</button>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://vskricxnmyupilqwsqyt.supabase.co';
+        const SUPABASE_ANON_KEY = 'SUPABASE_ANON_KEY_BURAYA';
+
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Sayfa açıldığında oturum kontrolü yap (Giriş yapılmadıysa index.html'e geri at)
+        async function checkAuth() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (!session) {
+                window.location.href = 'index.html';
+            } else {
+                document.getElementById('userEmailBadge').innerText = `Bağlı Zihin: ${session.user.email}`;
+            }
+        }
+        checkAuth();
+
+        // Çıkış yapma işlemi
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await _supabase.auth.signOut();
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
