@@ -36,8 +36,8 @@ async function generateDailyArticle() {
 
     const promptText = 'Felsefi, derin, düşündürücü ve aydınlatıcı Platon veya Nietzsche tarzında kısa bir günlük felsefe makalesi yaz. Yanıtı SADECE geçerli bir JSON nesnesi olarak ver. Başka hiçbir açıklama yazma. Yapı şöyle olmalı: {"title": "Makale Başlığı", "content": "Makale içeriği burada yer alsın..."}';
 
-    // Model adresini gemini-2.0-flash veya gemini-1.5-flash olarak çağırıyoruz
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    // Model adresini gemini-2.0-flash veya gemini-3.6-flash olarak çağırıyoruz
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
