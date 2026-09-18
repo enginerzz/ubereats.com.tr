@@ -25,4 +25,4 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
-        run: node generate-article.js
+        run: node generate-article.mjs
