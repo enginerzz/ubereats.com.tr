@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Felsefe ve Zihin - Giriş</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -76,9 +77,16 @@
             transition: background 0.3s;
             font-family: sans-serif;
             font-weight: bold;
+            margin-top: 10px;
         }
         button:hover {
             background-color: #4338ca;
+        }
+        .btn-register {
+            background-color: #10b981;
+        }
+        .btn-register:hover {
+            background-color: #059669;
         }
         .quote {
             margin-top: 25px;
@@ -88,6 +96,10 @@
             border-top: 1px solid #1f2937;
             padding-top: 15px;
         }
+        #message {
+            margin-top: 15px;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
@@ -96,24 +108,88 @@
         <h1>Cogito Ergo Sum</h1>
         <div class="subtitle">"Düşünüyorum, öyleyse varım."</div>
         
-        <form onsubmit="event.preventDefault(); alert('Mağaradan çıkış simülasyonu başlatıldı.');">
+        <form id="authForm">
             <div class="input-group">
                 <label>Zihin / E-posta Adresi</label>
-                <input type="text" placeholder="bilinc@felsefe.com" required>
+                <input type="email" id="email" placeholder="bilinc@felsefe.com" required>
             </div>
             
             <div class="input-group">
                 <label>Mutlak Hakikat / Şifre</label>
-                <input type="password" placeholder="••••••••" required>
+                <input type="password" id="password" placeholder="••••••••" required>
             </div>
             
-            <button type="submit">Mağaradan Çık (Giriş Yap)</button>
+            <button type="submit" id="loginBtn">Mağaradan Çık (Giriş Yap)</button>
+            <button type="button" id="registerBtn" class="btn-register">Zihni Kayıt Et (Üye Ol)</button>
         </form>
+
+        <div id="message"></div>
 
         <div class="quote">
             "Sorgulanmamış bir yaşam, yaşanmaya değer değildir." — Socrates
         </div>
     </div>
+
+    <script>
+        // ==========================================
+        // BURAYA KOPYALADIĞIN BİLGİLERİ YAPIŞTIRACAKSIN:
+        // ==========================================
+        const SUPABASE_URL = https://supabase.com/dashboard/project/vskricxnmyupilqwsqyt;
+        const SUPABASE_ANON_KEY = sb_publishable_HHpLGNX8JobjJFS4w8uvmw_JeZg6b4_;
+        // ==========================================
+
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const messageDiv = document.getElementById('message');
+
+        registerBtn.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            if(!email || !password) {
+                messageDiv.style.color = '#ef4444';
+                messageDiv.innerText = 'Lütfen e-posta ve şifre girin.';
+                return;
+            }
+
+            const { data, error } = await _supabase.auth.signUp({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                messageDiv.style.color = '#ef4444';
+                messageDiv.innerText = 'Hata: ' + error.message;
+            } else {
+                messageDiv.style.color = '#10b981';
+                messageDiv.innerText = 'Kayıt başarılı! Şimdi giriş yapabilirsiniz.';
+            }
+        });
+
+        loginBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            const { data, error } = await _supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                messageDiv.style.color = '#ef4444';
+                messageDiv.innerText = 'Giriş Başarısız: ' + error.message;
+            } else {
+                messageDiv.style.color = '#10b981';
+                messageDiv.innerText = 'Başarıyla giriş yapıldı! Hoş geldiniz.';
+            }
+        });
+    </script>
 
 </body>
 </html>
