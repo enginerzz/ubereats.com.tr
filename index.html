@@ -3,31 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Felsefe ve Zihin - Giriş</title>
+    <title>Giriş - Cogito Felsefe</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Georgia', serif; }
-        body { background-color: #0b0f19; color: #e2e8f0; height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .container { background-color: #111827; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); width: 100%; max-width: 400px; border: 1px solid #1f2937; text-align: center; }
-        h1 { font-size: 24px; margin-bottom: 10px; color: #f3f4f6; }
-        .subtitle { font-size: 13px; color: #9ca3af; margin-bottom: 30px; font-style: italic; }
-        .input-group { margin-bottom: 20px; text-align: left; }
+        body { background-color: #0b0f19; color: #e2e8f0; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .container { background-color: #111827; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); width: 100%; max-width: 420px; border: 1px solid #1f2937; text-align: center; }
+        h1 { font-size: 26px; margin-bottom: 8px; color: #f3f4f6; letter-spacing: 1px; }
+        .subtitle { font-size: 13px; color: #9ca3af; margin-bottom: 25px; font-style: italic; }
+        .input-group { margin-bottom: 18px; text-align: left; }
         label { display: block; font-size: 12px; margin-bottom: 5px; color: #d1d5db; }
         input { width: 100%; padding: 12px; background-color: #1f2937; border: 1px solid #374151; border-radius: 6px; color: #fff; font-size: 14px; outline: none; }
-        button { width: 100%; padding: 12px; background-color: #4f46e5; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .btn-register { background-color: #10b981; }
+        input:focus { border-color: #4f46e5; }
+        button { width: 100%; padding: 12px; background-color: #4f46e5; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; font-weight: bold; margin-top: 8px; transition: background 0.2s; }
+        button:hover { background-color: #4338ca; }
+        .btn-register { background-color: #059669; }
+        .btn-register:hover { background-color: #047857; }
         .quote { margin-top: 25px; font-size: 12px; color: #6b7280; line-height: 1.5; border-top: 1px solid #1f2937; padding-top: 15px; }
-        #message { margin-top: 15px; font-size: 13px; padding: 8px; border-radius: 4px; }
+        #message { margin-top: 15px; font-size: 13px; padding: 10px; border-radius: 6px; display: none; }
     </style>
 </head>
 <body>
-
     <div class="container">
         <h1>Cogito Ergo Sum</h1>
         <div class="subtitle">"Düşünüyorum, öyleyse varım."</div>
         
         <div class="input-group">
-            <label>Zihin / E-posta Adresi</label>
+            <label>Zihin / E-posta</label>
             <input type="email" id="email" placeholder="bilinc@felsefe.com">
         </div>
         
@@ -47,12 +49,20 @@
     </div>
 
     <script>
-        // DIKKAT: Yalnizca BURADAKI buyuk harfli metinleri sil, tırnak işaretlerine (`'`) ASLA dokunma!
         const SUPABASE_URL = 'https://vskricxnmyupilqwsqyt.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_HHpLGNX8JobjJFS4w8uvmw_JeZg6b4_';
 
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Kullanıcı daha önceden giriş yaptıysa direkt dashboard'a yönlendir
+        async function checkSession() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (session) {
+                window.location.href = 'dashboard.html';
+            }
+        }
+        checkSession();
 
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
@@ -62,6 +72,7 @@
 
         function showMessage(text, isError = false) {
             messageDiv.innerText = text;
+            messageDiv.style.display = 'block';
             messageDiv.style.backgroundColor = isError ? '#7f1d1d' : '#065f46';
             messageDiv.style.color = '#fff';
         }
@@ -71,15 +82,15 @@
             const password = passwordInput.value.trim();
 
             if(!email || !password) {
-                showMessage('Lütfen e-posta ve şifre yazın!', true);
+                showMessage('Lütfen e-posta ve şifrenizi girin.', true);
                 return;
             }
 
-            showMessage('Kayıt yapılıyor...');
+            showMessage('Zihin kaydediliyor...');
             const { data, error } = await _supabase.auth.signUp({ email, password });
 
             if (error) {
-                showMessage('Hata: ' + error.message, true);
+                showMessage('Kayıt Hatası: ' + error.message, true);
             } else {
                 showMessage('Kayıt başarılı! Şimdi giriş yapabilirsiniz.');
             }
@@ -90,20 +101,19 @@
             const password = passwordInput.value.trim();
 
             if(!email || !password) {
-                showMessage('Lütfen e-posta ve şifre yazın!', true);
+                showMessage('Lütfen e-posta ve şifrenizi girin.', true);
                 return;
             }
 
-            showMessage('Giriş yapılıyor...');
+            showMessage('Bilinç doğrulanıyor...');
             const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
 
             if (error) {
                 showMessage('Giriş Hatası: ' + error.message, true);
             } else {
-                showMessage('Başarıyla giriş yapıldı! Hoş geldiniz.');
+                window.location.href = 'dashboard.html';
             }
         });
     </script>
-
 </body>
 </html>
