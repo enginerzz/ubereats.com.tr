@@ -14,8 +14,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function fetchGeminiWithFallback(promptText) {
-  // İlk tercih gemini-3.6-flash, yoğunluk durumunda yedek model gemini-1.5-flash
-  const models = ['gemini-3.6-flash', 'gemini-1.5-flash'];
+  // Geçerli ve aktif modeller
+  const models = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
   for (const model of models) {
     console.log(`--- ${model} modeli deneniyor ---`);
@@ -50,7 +50,7 @@ async function fetchGeminiWithFallback(promptText) {
         } else {
           const errorText = await response.text();
           console.error(`${model} API Hatası:`, response.status, errorText);
-          break; // Kalıcı hatada hemen yedek modele geç
+          break; // Kalıcı hatada hemen bir sonraki modele geç
         }
       } catch (err) {
         console.error('Bağlantı hatası:', err.message);
@@ -60,7 +60,7 @@ async function fetchGeminiWithFallback(promptText) {
     console.warn(`${model} yanıt vermedi, yedek modele geçiliyor...`);
   }
 
-  throw new Error('Tüm Gemini modelleri yoğunluk nedeniyle başarısız oldu.');
+  throw new Error('Tüm Gemini modelleri yoğunluk veya hata nedeniyle başarısız oldu.');
 }
 
 async function generateDailyArticle() {
