@@ -11,8 +11,10 @@
         .app-container { max-width: 700px; width: 100%; text-align: center; }
         .subtitle { font-size: 13px; color: #9ca3af; margin-bottom: 25px; font-style: italic; }
         .card { background-color: #111827; border: 1px solid #1f2937; padding: 30px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); text-align: left; }
-        .card h3 { color: #34d399; margin-bottom: 12px; font-size: 18px; }
-        .card p { color: #d1d5db; line-height: 1.7; font-size: 15px; }
+        .card.featured { border: 1px solid #059669; background-color: #064e3b15; }
+        .card h3 { color: #34d399; margin-bottom: 12px; font-size: 20px; }
+        .card .date-tag { font-size: 11px; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block; }
+        .card p { color: #d1d5db; line-height: 1.7; font-size: 15px; white-space: pre-line; }
         .user-badge { display: inline-block; background: #1f2937; padding: 6px 14px; border-radius: 20px; font-size: 12px; color: #9ca3af; margin-bottom: 25px; border: 1px solid #374151; }
         .btn-logout { background-color: #991b1b; color: white; border: none; border-radius: 6px; width: auto; padding: 10px 25px; font-size: 13px; cursor: pointer; margin-top: 10px; font-weight: bold; transition: background 0.2s; }
         .btn-logout:hover { background-color: #7f1d1d; }
@@ -25,6 +27,15 @@
         <p class="subtitle">Gerçekliğin ve Bilincin Sınırlarında Gezinti</p>
         <div class="user-badge" id="userEmailBadge">Bağlı Zihin: Yükleniyor...</div>
 
+        <!-- Günün Makalesi Alanı -->
+        <div id="dailyArticleContainer">
+            <div class="card featured">
+                <span class="date-tag">Günün Makalesi</span>
+                <h3 id="articleTitle">Zihin yükleniyor...</h3>
+                <p id="articleContent">Akıl süzgecinden geçiriliyor, lütfen bekleyin...</p>
+            </div>
+        </div>
+
         <div class="card">
             <h3>Platon'un Mağara Alegorisi</h3>
             <p>İnsanlar yerin altında, elleri ayakları zincirlenmiş halde doğduklarından beri buradadırlar. Arkalarında yanan bir ateşin ışığıyla duvara yansıyan gölgeleri gerçek sanırlar. Felsefe, insanın zihnindeki zincirleri kırıp dışarıdaki güneşi (gerçeği) görme çabasıdır.</p>
@@ -35,37 +46,63 @@
             <p>"Her şeyden kuşku duyabilirim; ancak kuşku duyduğumdan, yani düşündüğümden kuşku duyamam. Düşünüyorsam, var olmalıyım." Varlık temelimizi akıl ve bilinç üzerine kuruyoruz.</p>
         </div>
 
-        <div class="card">
-            <h3>Nietzsche ve Üstinsan (Übermensch)</h3>
-            <p>İnsan, hayvan ile üstinsan arasında gerilmiş bir ipdir — uçurum üstünde bir ip. İnsanı aşılması gereken bir varlık, kendi değerlerini kendi yaratan özgür bir töz olarak ele alın.</p>
-        </div>
-
         <button class="btn-logout" id="logoutBtn">Mağaraya Geri Dön (Çıkış Yap)</button>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://vskricxnmyupilqwsqyt.supabase.co';
-        const SUPABASE_ANON_KEY = 'SUPABASE_ANON_KEY_BURAYA';
+        const SUPABASE_ANON_KEY = 'sb_publishable_HHpLGNX8JobjJFS4w8uvmw_JeZg6b4_';
 
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Sayfa açıldığında oturum kontrolü yap (Giriş yapılmadıysa index.html'e geri at)
-        async function checkAuth() {
+        // Oturum Kontrolü ve Makale Getirme
+        async function initDashboard() {
             const { data: { session } } = await _supabase.auth.getSession();
             if (!session) {
                 window.location.href = 'index.html';
+                return;
+            }
+
+            document.getElementById('userEmailBadge').innerText = `Bağlı Zihin: ${session.user.email}`;
+            await fetchTodayArticle();
+        }
+
+        async function fetchTodayArticle() {
+            const today = new Date().toISOString().split('T')[0];
+
+            // Önce bugünün makalesini ara, yoksa en son yayınlanan makaleyi getir
+            let { data, error } = await _supabase
+                .from('articles')
+                .select('*')
+                .eq('date', today)
+                .maybeSingle();
+
+            if (!data) {
+                const { data: latest } = await _supabase
+                    .from('articles')
+                    .select('*')
+                    .order('date', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                data = latest;
+            }
+
+            if (data) {
+                document.getElementById('articleTitle').innerText = data.title;
+                document.getElementById('articleContent').innerText = data.content;
             } else {
-                document.getElementById('userEmailBadge').innerText = `Bağlı Zihin: ${session.user.email}`;
+                document.getElementById('articleTitle').innerText = 'Henüz Makale Yayınlanmadı';
+                document.getElementById('articleContent').innerText = 'Bugün için henüz felsefi bir döküman üretilmedi. Lütfen daha sonra tekrar kontrol edin.';
             }
         }
-        checkAuth();
 
-        // Çıkış yapma işlemi
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             await _supabase.auth.signOut();
             window.location.href = 'index.html';
         });
+
+        initDashboard();
     </script>
 </body>
 </html>
