@@ -11,58 +11,62 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !GEMINI_API_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// Bekleme fonksiyonu
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function fetchGeminiWithRetry(promptText, maxRetries = 3) {
-  const model = 'gemini-3.6-flash';
+async function fetchGeminiWithFallback(promptText) {
+  // İlk tercih gemini-3.6-flash, yoğunluk durumunda yedek model gemini-1.5-flash
+  const models = ['gemini-3.6-flash', 'gemini-1.5-flash'];
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`Gemini API'den felsefi makale isteniyor (Deneme ${attempt}/${maxRetries})...`);
-      
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: promptText }] }],
-            generationConfig: { responseMimeType: 'application/json' }
-          })
+  for (const model of models) {
+    console.log(`--- ${model} modeli deneniyor ---`);
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        console.log(`${model} isteği gönderiliyor (Deneme ${attempt}/2)...`);
+        
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: promptText }] }],
+              generationConfig: { responseMimeType: 'application/json' }
+            })
+          }
+        );
+
+        if (response.ok) {
+          const result = await response.json();
+          const rawContent = result.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (rawContent) {
+            console.log(`Başarılı! Yanıt ${model} üzerinden alındı.`);
+            return JSON.parse(rawContent);
+          }
         }
-      );
 
-      if (response.ok) {
-        const result = await response.json();
-        const rawContent = result.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (rawContent) return JSON.parse(rawContent);
+        if (response.status === 503 || response.status === 429) {
+          console.warn(`${model} yoğun (${response.status}). 3 saniye bekleniyor...`);
+          await sleep(3000);
+        } else {
+          const errorText = await response.text();
+          console.error(`${model} API Hatası:`, response.status, errorText);
+          break; // Kalıcı hatada hemen yedek modele geç
+        }
+      } catch (err) {
+        console.error('Bağlantı hatası:', err.message);
+        await sleep(2000);
       }
-
-      // 503 veya 429 (yoğunluk/kota) durumunda bekle ve tekrar dene
-      if (response.status === 503 || response.status === 429) {
-        const waitTime = attempt * 4000; // 4sn, 8sn, 12sn bekle
-        console.warn(`Sunucu yoğun (${response.status}). ${waitTime / 1000} saniye sonra tekrar deneniyor...`);
-        await sleep(waitTime);
-      } else {
-        const errorText = await response.text();
-        console.error(`Gemini API Hatası:`, response.status, errorText);
-        break;
-      }
-    } catch (err) {
-      console.error('İstek hatası:', err.message);
-      await sleep(3000);
     }
+    console.warn(`${model} yanıt vermedi, yedek modele geçiliyor...`);
   }
 
-  throw new Error('Google Gemini API yoğunluk nedeniyle yanıt veremedi.');
+  throw new Error('Tüm Gemini modelleri yoğunluk nedeniyle başarısız oldu.');
 }
 
 async function generateDailyArticle() {
   try {
     const today = new Date().toISOString().split('T')[0];
 
-    // 1. Bugünün makalesi kontrolü
     const { data: existing, error: checkError } = await supabase
       .from('articles')
       .select('*')
@@ -82,10 +86,8 @@ async function generateDailyArticle() {
     const promptText =
       'Felsefi, derin, düşündürücü ve aydınlatıcı Platon veya Nietzsche tarzında kısa bir günlük felsefe makalesi yaz. Yanıtı SADECE geçerli bir JSON nesnesi olarak ver. Başka hiçbir açıklama yazma. Yapı şöyle olmalı: {"title": "Makale Başlığı", "content": "Makale içeriği burada yer alsın..."}';
 
-    // 2. Gemini'den üret
-    const articleData = await fetchGeminiWithRetry(promptText);
+    const articleData = await fetchGeminiWithFallback(promptText);
 
-    // 3. Supabase'e kaydet
     const { error: insertError } = await supabase.from('articles').insert([
       { date: today, title: articleData.title, content: articleData.content }
     ]);
